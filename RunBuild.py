@@ -17,6 +17,7 @@ import os
 import zipfile
 import time
 import sys
+import configparser
 
 
 def update_svn(p_path):
@@ -35,6 +36,8 @@ if __name__ == '__main__':
     if not os.path.exists(sys.argv[sys.argv.index('-p')+1]):
         print(" make sure the project file >"+sys.argv[sys.argv.index('-p')+1]+"< exists !!!")
         sys.exit(0)
+    conf = configparser.ConfigParser()
+    conf.read('conf.ini')
     PROJECTNAME = None
     List_javaFile = list()
     List_otherFile = list()
@@ -42,16 +45,23 @@ if __name__ == '__main__':
     update_svn(PROJECTNAME)
     CHAR = 'utf-8'
     DATAFileName = 'data.txt'
-    CATALINA_HOME = str(os.environ.get('CATALINA_HOME'))
+    if conf.get("custom", "CATALINA_HOME") is not None:
+        CATALINA_HOME = str(conf.get("custom", "CATALINA_HOME"))
+    else:
+        try:
+            CATALINA_HOME = str(os.environ.get('CATALINA_HOME'))
+        except Exception as e:
+            print()
+            CATALINA_HOME = None
+            pass
     if CATALINA_HOME is None:
         print('\033[1;31m There is no Tomcat CATALINA_HOME. if build wrong ,please set CATALINA_HOME \033[0m')
         EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;'
     else:
         EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;' + CATALINA_HOME + '/lib;'
-
     SOURCEPATH = ' .;src/ '
     CLASSPATH = '.;'+PROJECTNAME+'\WebRoot\WEB-INF\lib;'
-    with open(DATAFileName,'r') as fileList:
+    with open(DATAFileName, 'r') as fileList:
         for line in fileList.readlines():
             if line.strip().endswith('java'):
                 print(line)
@@ -59,7 +69,6 @@ if __name__ == '__main__':
             else:
                 List_otherFile.append(line.strip())
     fileList.close()
-
     BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " -sourcepath " + SOURCEPATH + " "
     nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S_") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
@@ -73,5 +82,5 @@ if __name__ == '__main__':
             print(OtherPath)
             zf.write(OtherPath)
     zf.close()
-
     print("all done !!")
+    sys.exit(0)
