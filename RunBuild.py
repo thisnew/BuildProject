@@ -17,73 +17,61 @@ import os
 import zipfile
 import time
 import sys
-import re
 
 
-def main(argv):
-    print(argv)
-    CATALINA_HOME = str(os.environ.get('CATALINA_HOME'))
-    VERSION = str(argv)
+def update_svn(p_path):
+    os.system('svn update '+p_path)
+
+
+if __name__ == '__main__':
+
+    # argv check
+    if '-h' in sys.argv:
+        print("     -p  projectname \n     -c  conf.ini path \n     -d  project output path \n")
+        sys.exit(0)
+    if len(sys.argv) < 3 or '-p' not in sys.argv:
+        print('not -p met')
+        sys.exit(0)
+    if not os.path.exists(sys.argv[sys.argv.index('-p')+1]):
+        print(" make sure the project file >"+sys.argv[sys.argv.index('-p')+1]+"< exists !!!")
+        sys.exit(0)
+    PROJECTNAME = None
+    List_javaFile = list()
+    List_otherFile = list()
+    PROJECTNAME = sys.argv[sys.argv.index('-p')+1]
+    update_svn(PROJECTNAME)
     CHAR = 'utf-8'
-
+    DATAFileName = 'data.txt'
+    CATALINA_HOME = str(os.environ.get('CATALINA_HOME'))
     if CATALINA_HOME is None:
         print('\033[1;31m There is no Tomcat CATALINA_HOME. if build wrong ,please set CATALINA_HOME \033[0m')
-        EXJARPATH = 'WebRoot\WEB-INF\lib;'
+        EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;'
     else:
-        EXJARPATH = 'WebRoot\WEB-INF\lib;' + CATALINA_HOME + '\lib;'
+        EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;' + CATALINA_HOME + '/lib;'
 
-    SOURCEPATH = ' .;src\ '
-    CLASSPATH = '.;WebRoot\WEB-INF\lib;'
-    PROJECTNAME = 'jrbs_report'
-    os.system("chcp 65001")
-    try:
-        os.system("del diff.list")
-    except e:
-        pass
-    DIFF = "svn diff --summarize -r" + VERSION + " >> diff.list"
-    print(DIFF)
-    os.system(DIFF)
-    result = list()
-    buildJavaList = list()
-    # read file path
-    file = open('diff.list', 'r')
-    for i in file.readlines():
-        result.append(str(i.rsplit('\n')[0]).split('       ')[1])
-
-    # per build java file
-    for row in result:
-        if row.endswith('.java'):
-            buildJavaList.append(row)
-    # java build path
+    SOURCEPATH = ' .;src/ '
+    CLASSPATH = '.;'+PROJECTNAME+'\WebRoot\WEB-INF\lib;'
+    with open(DATAFileName,'r') as fileList:
+        for line in fileList.readlines():
+            if line.strip().endswith('java'):
+                print(line)
+                List_javaFile.append(line.strip())
+            else:
+                List_otherFile.append(line.strip())
+    fileList.close()
 
     BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " -sourcepath " + SOURCEPATH + " "
-    nowTime = time.strftime("%Y%m%d_%H%M%S_") + PROJECTNAME + '_' + VERSION.replace(':', 'To') + '.zip'
-    print(nowTime)
+    nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S_") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
-    for JavaPath in buildJavaList:
+    for JavaPath in List_javaFile:
         print(BUILDCMD + JavaPath)
         os.system(BUILDCMD + JavaPath)
         classpath = JavaPath.replace('.java', '.class')
         zf.write(classpath)
-        os.system("del " + classpath)
-    for OtherPath in result:
+    for OtherPath in List_otherFile:
         if not OtherPath.endswith('.java'):
             print(OtherPath)
             zf.write(OtherPath)
     zf.close()
-    file.close()
 
-    # os.system("del diff.list")
-    print(result)
-    print(buildJavaList)
-
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("example : python runbuild.py 20:30")
-        sys.exit(0)
-    else:
-        if not re.match(r'^[0-9]*:[0-9]*$', str(sys.argv[1])):
-            print('VersionNum like --> 20:22 ')
-            sys.exit(0)
-        else:
-            main(sys.argv[1])
+    print("all done !!")
