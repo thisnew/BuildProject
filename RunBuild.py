@@ -17,7 +17,11 @@ import os
 import zipfile
 import time
 import sys
-import configparser
+try:
+    import configparser
+except Exception as e:
+    import ConfigParser
+    pass
 
 
 def update_svn(p_path):
