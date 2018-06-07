@@ -56,31 +56,32 @@ if __name__ == '__main__':
             pass
     if CATALINA_HOME is None:
         print('\033[1;31m There is no Tomcat CATALINA_HOME. if build wrong ,please set CATALINA_HOME \033[0m')
-        EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;'
+        EXJARPATH = PROJECTNAME + '/'+'WebRoot/WEB-INF/lib:'
     else:
-        EXJARPATH = PROJECTNAME + '/ ' + 'WebRoot/WEB-INF/lib;' + CATALINA_HOME + '/lib;'
-    SOURCEPATH = ' .;src/ '
-    CLASSPATH = '.;'+PROJECTNAME+'\WebRoot\WEB-INF\lib;'
+        EXJARPATH = PROJECTNAME + '/'+'WebRoot/WEB-INF/lib:' + CATALINA_HOME + '/lib:'
+    SOURCEPATH = ' .:src/ '
+    CLASSPATH = '.:'+PROJECTNAME+'/WebRoot/WEB-INF/lib:'
     with open(DATAFileName, 'r') as fileList:
         for line in fileList.readlines():
             if line.strip().endswith('java'):
-                print(line)
                 List_javaFile.append(line.strip())
             else:
                 List_otherFile.append(line.strip())
     fileList.close()
     BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " -sourcepath " + SOURCEPATH + " "
-    nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S_") + '.zip'
+    nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
     for JavaPath in List_javaFile:
         print(BUILDCMD + JavaPath)
         os.system(BUILDCMD + JavaPath)
         classpath = JavaPath.replace('.java', '.class')
         zf.write(classpath)
+        print("zipping .class ...  "+classpath)
+        os.system('rm -rf '+classpath)
     for OtherPath in List_otherFile:
-        if not OtherPath.endswith('.java'):
-            print(OtherPath)
-            zf.write(OtherPath)
+        #if not OtherPath.endswith('.java'):
+        zf.write(OtherPath)
+        print("zipping other ...  "+OtherPath)
     zf.close()
-    print("all done !!")
+    print("zip all done !! >>>>>>>>>"+nowTime)
     sys.exit(0)
