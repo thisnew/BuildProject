@@ -50,7 +50,7 @@ if __name__ == '__main__':
         sys.exit(0)
     if '-cl' in sys.argv:
         print("\033[1;31m 这个操作一般不需要执行，只有才不确定是否有.class文件存留的情况下使用 请谨慎! \033[0m")
-        ans = raw_input("Enter (yes) to continue:")
+        ans = input("Enter (yes) to continue:")
         if ans == 'yes':
             os.system('''find '''+sys.argv[sys.argv.index('-p')+1]+''' -name '*.class' -exec rm -rf {} \;''')
             print("\033[1;31m done \033[0m")
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     print("\033[1;31m 使用默认 ClassPath:"+CLASSPATH+"\033[0m")
     with open(DATAFileName, 'r') as fileList:
         for line in fileList.readlines():
-            if line.strip() == '' or line.strip().startswith('#') or  line.strip().endswith('/'):
+            if line.strip() == '' or line.strip().startswith('#') or line.strip().endswith('/'):
                 pass
             else:
                 if line.strip().endswith('java'):
@@ -105,18 +105,21 @@ if __name__ == '__main__':
                 else:
                     List_otherFile.append(line.strip())
     fileList.close()
-    BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " "
+    BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " "+"-d "+PROJECTNAME+"/WebRoot/WEB-INF/classes"
     nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
     for JavaPath in List_javaFile:
         print('\033[1;32m')
         print('执行编译 >>>>'+BUILDCMD + JavaPath+'\033[0m ')
         os.system(BUILDCMD + JavaPath)
-        classpath = JavaPath.replace('.java', '.class')
-        zf.write(classpath)
-        print('\033[1;34m')
-        print("正在压缩 .class ...  "+classpath+'\033[0m ')
-        os.system('rm -rf '+classpath)
+        #classpath = JavaPath.replace('.java', '.class')
+        # print('\033[1;34m')
+        # print("正在压缩 .class ...  "+classpath+'\033[0m ')
+        # os.system('rm -rf '+classpath)
+    print('\033[1;34m')
+    print('正在压缩 .class ... >> WEB-INF/classes \033[0m ')
+    zf.write(PROJECTNAME + "/WebRoot/WEB-INF/classes")
+    os.system('rm -rf ' + PROJECTNAME + "/WebRoot/WEB-INF/classes/*")
     for OtherPath in List_otherFile:
         # if not OtherPath.endswith('.java'):
         zf.write(OtherPath)
