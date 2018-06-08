@@ -18,9 +18,9 @@ import zipfile
 import time
 import sys
 try:
-    import configparser
+    import configparser as ConfigParser
 except Exception as e:
-    import ConfigParser
+    import ConfigParser as ConfigParser
     pass
 
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     if not os.path.exists(sys.argv[sys.argv.index('-p')+1]):
         print(" make sure the project file >"+sys.argv[sys.argv.index('-p')+1]+"< exists !!!")
         sys.exit(0)
-    conf = configparser.ConfigParser()
+    conf = ConfigParser.ConfigParser()
     conf.read('conf.ini')
     PROJECTNAME = None
     List_javaFile = list()
@@ -49,21 +49,24 @@ if __name__ == '__main__':
     update_svn(PROJECTNAME)
     CHAR = 'utf-8'
     DATAFileName = 'data.txt'
-    if conf.get("custom", "CATALINA_HOME") is not None:
-        CATALINA_HOME = str(conf.get("custom", "CATALINA_HOME"))
-    else:
+    print(str(conf.get("custom", "CATALINA_HOME")).strip() == "")
+    if str(conf.get("custom", "CATALINA_HOME")).strip() == "":
         try:
             CATALINA_HOME = str(os.environ.get('CATALINA_HOME'))
+            print(CATALINA_HOME)
         except Exception as e:
-            print()
+            print('no catalina')
             CATALINA_HOME = None
             pass
-    if CATALINA_HOME is None:
+    else:
+        CATALINA_HOME = conf.get("custom", "CATALINA_HOME")
+        print('CATALINA_HOME:'+CATALINA_HOME)
+    if CATALINA_HOME == 'None':
         print('\033[1;31m There is no Tomcat CATALINA_HOME. if build wrong ,please set CATALINA_HOME \033[0m')
         EXJARPATH = PROJECTNAME + '/'+'WebRoot/WEB-INF/lib:'
     else:
         EXJARPATH = PROJECTNAME + '/'+'WebRoot/WEB-INF/lib:' + CATALINA_HOME + '/lib:'
-    SOURCEPATH = ' .:src/ '
+    SOURCEPATH = '.:'+PROJECTNAME+'/src/ '
     CLASSPATH = '.:'+PROJECTNAME+'/WebRoot/WEB-INF/lib:'
     with open(DATAFileName, 'r') as fileList:
         for line in fileList.readlines():
@@ -89,3 +92,5 @@ if __name__ == '__main__':
     zf.close()
     print("zip all done !! >>>>>>>>>"+nowTime)
     sys.exit(0)
+
+    #javac -encoding utf-8 -Djava.ext.dirs=jrbs_standard_v4.0/WebRoot/WEB-INF/lib:/alidata1/70-78-apache-tomcat-7.0.59/lib: -cp jrbs_standard_v4.0/src/:jrbs_standard_v4.0/pnrpay/:jrbs_standard_v4.0/pnrpay_gz/ jrbs_standard_v4.0/pnrpay_gz/com/esoft/pnrpay_gz/loan/service/impl/PnrPayGzAutoRepayOperation.java
