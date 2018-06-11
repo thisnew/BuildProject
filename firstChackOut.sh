@@ -2,8 +2,11 @@
 
 
 # updata svn code
-echo $1
-svn co https://jrbspro.jinrongboshi.com:8443/svn/jrbsproweb/trunk/jrbs_standard_v4.0/ --username niuzongyuan2016 --password 111111
+svn list https://jrbspro.jinrongboshi.com:8443/svn/jrbsproweb/trunk --username niuzongyuan2016 --password 111111
+
+read -p "输入项目名称:" project
+
+svn co https://jrbspro.jinrongboshi.com:8443/svn/jrbsproweb/trunk/$project --username niuzongyuan2016 --password 111111
 #cd $1
 #svn update
 # read file path

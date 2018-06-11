@@ -105,7 +105,10 @@ if __name__ == '__main__':
                 else:
                     List_otherFile.append(line.strip())
     fileList.close()
-    BUILDCMD = "javac -encoding " + CHAR + " -Djava.ext.dirs=" + EXJARPATH + " -cp " + CLASSPATH + " "+"-d "+PROJECTNAME+"/WebRoot/WEB-INF/classes"
+    BUILDCMD = "javac -encoding " + CHAR \
+               + " -Djava.ext.dirs=" + EXJARPATH\
+               + " -cp " + CLASSPATH + " "+"-d "\
+               + PROJECTNAME + "/WebRoot/WEB-INF/classes"
     nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
     for JavaPath in List_javaFile:
@@ -118,7 +121,7 @@ if __name__ == '__main__':
         # os.system('rm -rf '+classpath)
     print('\033[1;34m')
     print('正在压缩 .class ... >> WEB-INF/classes \033[0m ')
-    zf.write(PROJECTNAME + "/WebRoot/WEB-INF/classes")
+    zf.write(PROJECTNAME + "/WebRoot/WEB-INF/classes/")
     os.system('rm -rf ' + PROJECTNAME + "/WebRoot/WEB-INF/classes/*")
     for OtherPath in List_otherFile:
         # if not OtherPath.endswith('.java'):
