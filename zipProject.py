@@ -17,6 +17,7 @@ import os
 import zipfile
 import time
 import sys
+import re
 try:
     import configparser as ConfigParser
 except Exception as e:
@@ -58,12 +59,16 @@ if __name__ == '__main__':
     PROJECTNAME = None
     List_javaFile = list()
     List_otherFile = list()
+
     PROJECTNAME = sys.argv[sys.argv.index('-p')+1]
     PROJECTNAME = str(PROJECTNAME).replace('/', ' ').strip()
-    print ("\033[1;31m  当前项目名称："+PROJECTNAME+"\033[0m")
 
-    ConfPath = sys.argv[sys.argv.index('-c')+1]
-    print ("\033[1;31m  当前conf.ini：" + ConfPath + "\033[0m")
+    print ("\033[1;31m  当前项目名称："+PROJECTNAME+"\033[0m")
+    DeleteClasses = "rm -rf " + PROJECTNAME + "/WebRoot/WEB-INF/classes/* "
+    os.system(DeleteClasses)
+
+    # ConfPath = sys.argv[sys.argv.index('-c')+1]
+    # print ("\033[1;31m  当前conf.ini：" + ConfPath + "\033[0m")
     conf = ConfigParser.ConfigParser()
     conf.read('conf.ini')
     # todo
@@ -102,32 +107,56 @@ if __name__ == '__main__':
             else:
                 if line.strip().endswith('java'):
                     List_javaFile.append(line.strip())
+                elif line.strip().endswith('/') or line.strip().endswith('\ '):
+                    pass
                 else:
                     List_otherFile.append(line.strip())
     fileList.close()
     BUILDCMD = "javac -encoding " + CHAR \
-               + " -Djava.ext.dirs=" + EXJARPATH\
-               + " -cp " + CLASSPATH + " "+"-d "\
-               + PROJECTNAME + "/WebRoot/WEB-INF/classes"
+               + " -Djava.ext.dirs=" + EXJARPATH \
+               + " -cp " + CLASSPATH + " "+"-d " \
+               + PROJECTNAME + "/WebRoot/WEB-INF/classes  "
     nowTime = PROJECTNAME + '_' + time.strftime("%Y%m%d_%H%M%S") + '.zip'
     zf = zipfile.ZipFile(nowTime, "w", zipfile.zlib.DEFLATED)
     for JavaPath in List_javaFile:
         print('\033[1;32m')
         print('执行编译 >>>>'+BUILDCMD + JavaPath+'\033[0m ')
         os.system(BUILDCMD + JavaPath)
-        #classpath = JavaPath.replace('.java', '.class')
-        # print('\033[1;34m')
-        # print("正在压缩 .class ...  "+classpath+'\033[0m ')
-        # os.system('rm -rf '+classpath)
-    print('\033[1;34m')
-    print('正在压缩 .class ... >> WEB-INF/classes \033[0m ')
-    zf.write(PROJECTNAME + "/WebRoot/WEB-INF/classes/")
-    os.system('rm -rf ' + PROJECTNAME + "/WebRoot/WEB-INF/classes/*")
+
+    print('\033[1;34m 正在压缩 .class ... >> WEB-INF/classes \033[0m ')
+    print("")
+
+    rootDir = PROJECTNAME + "/WebRoot/WEB-INF/classes/"
+    for root, dirs, files in os.walk(rootDir):
+        for file in files:
+            zf.write(os.path.join(root, file))
+
+    print('\033[1;34m 压缩ok \033[0m ')
+    if conf.get('jrbs_standard', 'name') == 'jrbs_standard':
+        PattenWord = conf.get('jrbs_standard', 'srcpath')
+    # todo    os.system("cp -R "+PROJECTNAME+'/exclude/lib/src/* '+PROJECTNAME+'/WebRoot/WEB-INF/lib')
+    else:
+        PattenWord = conf.get('jrbs_custom', 'srcpath')
+
+    patten = '^'+PROJECTNAME+'\/'+'('+PattenWord+')\/.*'
     for OtherPath in List_otherFile:
         # if not OtherPath.endswith('.java'):
-        zf.write(OtherPath)
-        print('\033[1;36m')
-        print("正在压缩 其他文件 ...  "+OtherPath+'\033[0m')
+        if re.match(str(patten), OtherPath):
+            print("\033[1;36m 正在压缩 其他文件 ...  "+OtherPath+'\033[0m')
+            WebInfPath = PROJECTNAME\
+                         + "/WebRoot/WEB-INF/classes/"\
+                         + OtherPath.replace(PROJECTNAME+'/'+re.split(str('(' + PattenWord + ')'), OtherPath)[1]+'/', '')
+            print("webinf:"+WebInfPath)
+            if not os.path.exists(os.path.dirname(WebInfPath)):
+                print(os.path.dirname(WebInfPath))
+                os.system('mkdir -p '+os.path.dirname(WebInfPath))
+
+            os.system('cp -f '+OtherPath+' '+WebInfPath)
+            zf.write(WebInfPath)
+        else:
+            zf.write(OtherPath)
     zf.close()
+    if conf.get("custom", "deleteClasses") =='true':
+        os.system(DeleteClasses)
     print('\033[5;30;41m'+">"*8 + "打包完成----"+nowTime+"!"+"<"*8+'\033[0m')
     sys.exit(0)
